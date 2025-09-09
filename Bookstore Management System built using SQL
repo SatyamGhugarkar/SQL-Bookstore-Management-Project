@@ -1,0 +1,148 @@
+create table books (Book_ID int primary key ,
+Title varchar(100) ,
+Author varchar (100) ,
+Genre varchar(100) ,
+Published_Year int,
+Price numeric(10,2) ,
+Stock int
+);
+
+--import dataset
+copy
+books(Book_ID  ,Title ,Author ,Genre  ,Published_Year ,Price,Stock)
+from 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Books.csv'
+csv header ;
+
+select * from books;
+
+
+drop table if exists books;
+
+create table customer (
+Customer_ID int primary key ,
+Name varchar(100) ,
+Email  varchar(100),
+Phone varchar(50) ,
+City    varchar(100) ,
+Country varchar(100));
+
+drop table if exists customers;
+
+copy customer(Customer_ID ,Name  ,Email  ,Phone,City     ,Country )
+from 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Customers.csv'
+csv header;
+
+select * from customer;
+
+
+create table orders(
+Order_ID  int primary key,
+Customer_ID  int references customer(Customer_ID),
+Book_ID int references books(Book_ID),
+Order_Date date,
+Quantity int,
+Total_Amount numeric(10,2));
+
+drop table if exists orders;
+
+copy
+orders(Order_ID ,Customer_ID ,Book_ID ,Order_Date ,Quantity ,Total_Amount )
+from 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Orders.csv'
+csv header;
+
+select * from orders;
+select * from customer;
+select * from books;
+
+---BASIC QUESTIONS
+
+--1) retrive all data from 'Fiction' genre :
+
+select * from books where genre ='Fiction';
+
+--2) find book published after the  year 1950:
+select * from books where published_year>1950;
+
+--3)list all customer from the canada
+select * from customer where country = 'Fiji';
+
+--4)show order palced in November 2023 :
+select * from orders where order_date between '2023-11-01' and '2023-11-30';
+
+--5) Retrive the total stock of books available
+select sum(stock) as total_stock from books;
+
+--6)Find the details of most expensives books
+
+select * from books order by price desc limit 1;
+
+--7) Show all customers who ordered more than 1 quantity of books
+
+select * from orders where quantity > 1;
+
+--8) Retive all orders where the total amount exceeds $20
+select * from orders where total_amount > 20 ;
+
+--9) list all geners avalable in books table ( distinct - unique )
+select distinct genre from books;
+
+--10)Find the books with the lowest stock
+select * from books order by stock asc limit 1 ;
+
+--11) Calculate the total revenue generated from all orders
+select sum(total_amount) as revenue from orders;
+
+---ADVANCE QUESTIONS
+
+select * from orders;
+select * from customer;
+select * from books;
+
+--1)Retrive the total no of books sold for each genre :
+
+select b.genre , sum(o.quantity)
+from books b join orders o ON o.book_id=b.book_id 
+group by b.genre;
+
+--2) Find the avrage price of books in the "Fantasy" genre :
+select avg(price) as avg_price_genre from books where genre='Fantasy' ;
+
+--3)List customers who have placed at least 2 orders:
+select o.customer_id ,c.name, count(o.order_id) as order_count
+from orders o
+join customer c on o.customer_id = c.customer_id
+group by o.customer_id ,c.name
+having count(order_id)>=2;
+
+--4)Find out the most frequently ordered book:
+select o.book_id ,b.title , count(o.order_id) as order_count
+from orders o
+join books b on o.book_id = b.book_id
+group by o.book_id ,b.title
+order by order_count desc limit 1;
+
+--5) show the top 3 most expensives book of 'Fantasy' genre:
+select * from books 
+where genre ='Fantasy' 
+order by price desc limit 3 ;
+
+--6)Retrive the total quntity of books sold by eash auther:
+select b.author ,sum(o.quantity)  as total_books_sold 
+from orders o 
+FULL join books b on o.book_id = b.book_id
+group by author;
+
+--7)List The cities where customers who spend over $30 are located:
+select distinct c.city ,total_amount
+from orders o
+join customer c on o.customer_id = c.customer_id
+where total_amount >30;
+
+--8)find the customer who spend the most  on orders:
+select c.customer_id ,c.name ,sum(o.total_amount) as total_spend
+from orders o
+join customer c on o.customer_id = c.customer_id
+group by c.customer_id , c.name
+order by total_spend desc  limit 1;
+
+
